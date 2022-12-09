@@ -7,14 +7,8 @@ Przykładowo by stworzyć prostą losowo wygenerowaną grę możesz użyć nast�
     stworz_mape()
     dodaj_bohatera()
     dodaj_przeciwnika()
-    dodaj_znajdzke()
+    dodaj_skarb()
     uruchom_gre()
 """
 
 from engine import *
-
-stworz_mape()
-dodaj_bohatera()
-dodaj_przeciwnika()
-dodaj_skarb()
-uruchom_gre()

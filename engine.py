@@ -405,34 +405,10 @@ def __run_game():
     pygame.init()
     pygame.freetype.init()
 
-    game_font = pygame.freetype.Font("resources/milkyboba.ttf", 48)
-    screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-
     running = True
 
-    map_size = (MAP_CONFIG["width"], MAP_CONFIG["height"])
-
-    tilemap, tiles, tile_border = createMap(map_size[0], map_size[1], SCREEN_CENTER)
-
-    for player_config in PLAYER_CONFIGS:
-        indices = (player_config["x"], player_config["y"])
-        player = createPlayer(player_config["sprite"], tilemap[indices])
-        players.add(player)
-
-    for enemy_config in ENEMY_CONFIGS:
-        indices = (enemy_config["x"], enemy_config["y"])
-        enemy = createEnemy(enemy_config["sprite"], tilemap[indices], enemy_config["speed"])
-        enemies.add(enemy)
-
-    for obstacle_config in OBSTACLE_CONFIGS:
-        indices = (obstacle_config["x"], obstacle_config["y"])
-        obstacle = createObstacle(obstacle_config["sprite"], tilemap[indices])
-        obstacles.add(obstacle)
-
-    for collectible_config in COLLECTIBLE_CONFIGS:
-        indices = (collectible_config["x"], collectible_config["y"])
-        collectible = createCollectibles(collectible_config["sprite"], tilemap[indices], collectible_config["score"])
-        collectibles.add(collectible)
+    game_font = pygame.freetype.Font("resources/milkyboba.ttf", 48)
+    screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 
     cover = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.SRCALPHA)
     pygame.draw.rect(cover, (0, 0, 0, 120), (0, 0, SCREEN_WIDTH, SCREEN_HEIGHT))
@@ -440,6 +416,37 @@ def __run_game():
     game_over_label = Image("resources/game_over_label.png", SCREEN_CENTER[0], SCREEN_CENTER[1])
     win_label = Image("resources/win_label.png", SCREEN_CENTER[0], SCREEN_CENTER[1])
     star_label = Image("resources/star.png", 0, 0)
+
+    map_size = (0, 0)
+    tilemap = {}
+    tiles = pygame.sprite.Group()
+    tile_border = pygame.sprite.Group()
+
+    if len(MAP_CONFIG) > 0:
+        map_size = (MAP_CONFIG["width"], MAP_CONFIG["height"])
+
+        tilemap, tiles, tile_border = createMap(map_size[0], map_size[1], SCREEN_CENTER)
+
+        for player_config in PLAYER_CONFIGS:
+            indices = (player_config["x"], player_config["y"])
+            player = createPlayer(player_config["sprite"], tilemap[indices])
+            players.add(player)
+
+        for enemy_config in ENEMY_CONFIGS:
+            indices = (enemy_config["x"], enemy_config["y"])
+            enemy = createEnemy(enemy_config["sprite"], tilemap[indices], enemy_config["speed"])
+            enemies.add(enemy)
+
+        for obstacle_config in OBSTACLE_CONFIGS:
+            indices = (obstacle_config["x"], obstacle_config["y"])
+            obstacle = createObstacle(obstacle_config["sprite"], tilemap[indices])
+            obstacles.add(obstacle)
+
+        for collectible_config in COLLECTIBLE_CONFIGS:
+            indices = (collectible_config["x"], collectible_config["y"])
+            collectible = createCollectibles(collectible_config["sprite"], tilemap[indices],
+                                             collectible_config["score"])
+            collectibles.add(collectible)
 
     while running:
         for event in pygame.event.get():
