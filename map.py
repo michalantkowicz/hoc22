@@ -7,7 +7,7 @@ from pygame.locals import (
 TILE_WIDTH = 64
 TILE_CORNER_WIDTH = 8
 TILE_BORDER_SIZE = (64, 8)
-TILE_BACKGROUNDS = ("tile_floor_horizontal.png", "tile_floor_vertical.png")
+TILE_BACKGROUNDS = ("resources/tile_floor_horizontal.png", "resources/tile_floor_vertical.png")
 
 
 class Tile(pygame.sprite.Sprite):
@@ -32,7 +32,7 @@ class TileBorder(pygame.sprite.Sprite):
     def __init__(self, center_x, center_y, angle=0):
         super(TileBorder, self).__init__()
 
-        self.surf = pygame.image.load("tile_border.png").convert()
+        self.surf = pygame.image.load("resources/tile_border.png").convert()
         self.surf.set_colorkey((255, 255, 255), RLEACCEL)
         self.surf = pygame.transform.rotate(self.surf, angle)
         self.rect = self.surf.get_rect()
@@ -45,7 +45,7 @@ class TileCorner(pygame.sprite.Sprite):
     def __init__(self, center_x, center_y, angle=0):
         super(TileCorner, self).__init__()
 
-        self.surf = pygame.image.load("tile_border_corner.png").convert()
+        self.surf = pygame.image.load("resources/tile_border_corner.png").convert()
         self.surf.set_colorkey((255, 255, 255), RLEACCEL)
         self.surf = pygame.transform.rotate(self.surf, angle)
         self.rect = self.surf.get_rect()

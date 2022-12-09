@@ -1,21 +1,20 @@
+"""W tym miejscu możesz skonfigurować i uruchomić swoją grę.
+
+W tym celu skorzystaj z metod opisanych w _game-engine.engine_.
+
+Przykładowo by stworzyć prostą losowo wygenerowaną grę możesz użyć następujących instrukcji:
+
+    stworz_mape()
+    dodaj_bohatera()
+    dodaj_przeciwnika()
+    dodaj_znajdzke()
+    uruchom_gre()
+"""
+
 from engine import *
 
-stworz_mape(szerokosc=8, wysokosc=6)
-dodaj_przeszkode(x=0,y=0)
-dodaj_przeszkode(x=1,y=0)
-dodaj_przeszkode(x=0,y=2)
-dodaj_przeszkode(x=1,y=2)
-# stworz_mape()
-dodaj_gracza()
+stworz_mape()
+dodaj_bohatera()
 dodaj_przeciwnika()
-dodaj_znajdzke()
-# dodaj_przeszkode()
-# dodaj_przeszkode()
-# dodaj_przeszkode()
-# dodaj_przeszkode()
-# dodaj_przeszkode()
-# dodaj_przeszkode()
-
-ustaw_wynik_docelowy(1)
-
+dodaj_skarb()
 uruchom_gre()

@@ -1,5 +1,9 @@
-# import the pygame module, so you can use it
+"""
+Zestaw metod niezbędnych do utworzenia własnej gry.
+"""
+
 import random
+from enum import Enum
 
 import pygame
 import pygame.freetype
@@ -26,7 +30,7 @@ OBSTACLE_CONFIGS = []
 COLLECTIBLE_CONFIGS = []
 
 SCORE = 0
-TARGET_SCORE = 3
+TARGET_SCORE = 1
 
 GAME_OVER = False
 WIN = False
@@ -39,12 +43,242 @@ obstacles = pygame.sprite.Group()
 collectibles = pygame.sprite.Group()
 
 
-def stworz_mape(szerokosc=-1, wysokosc=-1):
-    """Tworzy mapę o podanej ilości pól w poziomie i pionie. """
-    if szerokosc == -1 and wysokosc == -1:
-        szerokosc = random.randint(MAP_VALID_WIDTH[0], MAP_VALID_WIDTH[1])
-        wysokosc = random.randint(MAP_VALID_HEIGHT[0], MAP_VALID_HEIGHT[1])
-    __create_map(szerokosc, wysokosc)
+class Obrazek(Enum):
+    RYCERZ = "resources/player.png"
+    SMOK = "resources/enemy.png"
+    SKRZYNIA = "resources/crates.png"
+    GWIAZDKA = "resources/star.png"
+
+
+def stworz_mape(rozmiar=()):
+    """
+    **Przykłady użycia**
+
+        stworz_mape()
+        stworz_mape(rozmiar=(2,2))
+        stworz_mape(rozmiar=(4,5))
+
+    **Opis**
+
+    Tworzy mapę o podanej ilości pól w poziomie i pionie.
+
+    Mapa nie może być mniejsza niż 2x2 ani większa niż 6x8 pól.
+
+    Metodę należy wywołać jeden raz. Drugie wywołanie spowoduje zwrócenie błędu (patrz: **Zwracane błędy**).
+
+    ---
+
+    Pola mapy numerowane są następująco:
+
+        +---+---+---+
+        |0,0|1,0|2,0|
+        +---+---+---+
+        |0,1|1,1|2,1|
+        +---+---+---+
+        |0,2|1,2|2,2|
+        +---+---+---+
+
+    **Parametry**
+
+    - **rozmiar** _(opcjonalny)_ - liczba pól w poziomie
+        - wartość minimalna: **(2,2)**
+        - wartość maksymalna: **(6,8)**
+        - wartość domyślna: **())** (program wylosuje rozmiar mapy: szerokość 2-8 pól, wysokość: 2-6 pól)
+
+    **Zwracane błędy**
+
+    - **RuntimeError**
+        - _"Map width must be within (2,8) and height must be within (2,6)"_ - Podano nieprawidłowe wymiary mapy
+        - _"Map was already created!"_ - Mapa została już wcześniej utworzona
+    """
+    if len(rozmiar) == 0:
+        rozmiar = (
+            random.randint(MAP_VALID_WIDTH[0], MAP_VALID_WIDTH[1]),
+            random.randint(MAP_VALID_HEIGHT[0], MAP_VALID_HEIGHT[1])
+        )
+    __create_map(rozmiar[0], rozmiar[1])
+
+
+def uruchom_gre():
+    """
+    **Przykłady użycia**
+
+        uruchom_gre()
+
+    **Opis**
+    Uruchamia grę. Bez wywołania tej metody gra nie zostanie wyświetlona.
+    """
+    __run_game()
+
+
+def dodaj_bohatera(awatar=Obrazek.RYCERZ, pozycja=()):
+    """
+    **Przykłady użycia**
+
+        dodaj_bohatera()
+        dodaj_bohatera(awatar=Obrazek.RYCERZ, pozycja=(2,2))
+        dodaj_bohatera(pozycja=(4,5))
+
+    **Opis**
+    Ustawia na mapie bohatera, który może być kontrolowany za pomocą strzałek.
+
+    Bohater reprezentowany jest za pomocą obrazka podanego przez użytkownika.
+
+
+    **Parametry**
+
+    - **awatar** _(opcjonalny)_ - obrazek, który będzie reprezentował bohatera
+        - dopuszczalne wartości:
+            - Obrazek.RYCERZ
+    - **pozycja** _(opcjonalny)_ - numer pola w poziomie, na którym ustawiony zostanie bohater
+        - wartość minimalna: **(0, 0)**
+        - wartość maksymalna: zależy od wielkości mapy - np (4,4) dla mapy 4x4
+        - wartość domyślna: **()** (program wylosuje pole)
+    """
+    if len(pozycja) == 0:
+        pozycja = MAP_POSITIONS.pop(0)
+    __create_player(awatar.value, pozycja[0], pozycja[1])
+
+
+def dodaj_przeciwnika(awatar=Obrazek.SMOK, pozycja=(), predkosc=1):
+    """
+    **Przykłady użycia**
+
+        dodaj_przeciwnika()
+        dodaj_przeciwnika(awatar=Obrazek.SMOK, pozycja=(2,2), predkosc=3)
+        dodaj_przeciwnika(pozycja=(4,5))
+        dodaj_przeciwnika(predkosc=5)
+
+    **Opis**
+    Ustawia na mapie przeciwnika, który porusza się losowo.
+
+    Jeśli przeciwnik złapie bohatera to gra kończy się przegraną.
+
+    Prędkość może przyjąć jedną z pięciu wartości:
+
+    - **1** (przeciwnik porusza się znacznie wolniej od bohatera)
+    - **2** (przeciwnik porusza się wolniej od bohatera)
+    - **3** (przeciwnik porusza się z taką prędkością jak bohater)
+    - **4** (przeciwnik porusza się szybciej od bohatera)
+    - **5** (przeciwnik porusza się znacznie szybciej od bohatera)
+
+    lub **0** - przeciwnik będzie stał w miejscu.
+
+    **Parametry**
+
+    - **awatar** _(opcjonalny)_ - obrazek, który będzie reprezentował bohatera
+        - dopuszczalne wartości:
+            - Obrazek.SMOK
+        - wartość domyślna: **Obrazek.SMOK**
+    - **pozycja** _(opcjonalny)_ - numer pola w poziomie, na którym ustawiony zostanie przeciwnik
+        - wartość minimalna: **(0, 0)**
+        - wartość maksymalna: zależy od wielkości mapy - np (4,4) dla mapy 4x4
+        - wartość domyślna: **()** (program wylosuje pole)
+    - **predkosc** _(opcjonalny)_ - prędkość z jaką poruszał się będzie przeciwnik
+        - wartość minimalna: **0**
+        - wartość maksymalna: **5**
+        - wartość domyślna: **1**
+
+    **Zwracane błędy**
+
+    - **RuntimeError**
+        - _"Speed is invalid. Should be in range 0-5."_ - Podano nieprawidłową **predkosc**
+    """
+    if len(pozycja) == 0:
+        pozycja = MAP_POSITIONS.pop(0)
+    if predkosc < 0 or predkosc > 5:
+        raise RuntimeError("Speed is invalid. Should be in range 0-5.")
+    __create_enemy(awatar.value, pozycja[0], pozycja[1], predkosc)
+
+
+def dodaj_przeszkode(awatar=Obrazek.SKRZYNIA, pozycja=()):
+    """
+    **Przykłady użycia**
+
+        dodaj_przeszkode()
+        dodaj_przeszkode(awatar=Obrazek.SKRZYNIA, pozycja=(2,2))
+        dodaj_przeszkode(pozycja=(4,5))
+
+    **Opis**
+    Ustawia na mapie nieruchomą przeszkodę.
+
+    Pole z przeszkodą jest nieosiągalne dla bohaterów i przeciwników.
+
+    **Parametry**
+
+    - **awatar** _(opcjonalny)_ - obrazek, który będzie reprezentował przeszkodę
+        - dopuszczalne wartości:
+            - Obrazek.SKRZYNIA
+        - wartość domyślna: **Obrazek.SKRZYNIA**
+    - **pozycja** _(opcjonalny)_ - numer pola w poziomie, na którym ustawiona zostanie przeszkoda
+        - wartość minimalna: **(0, 0)**
+        - wartość maksymalna: zależy od wielkości mapy - np (4,4) dla mapy 4x4
+        - wartość domyślna: **()** (program wylosuje pole)
+    """
+    if len(pozycja) == 0:
+        pozycja = MAP_POSITIONS.pop(0)
+    __create_obstacle(awatar.value, pozycja[0], pozycja[1])
+
+
+def dodaj_skarb(awatar=Obrazek.GWIAZDKA, pozycja=(), punkty=1):
+    """
+    **Przykłady użycia**
+
+        dodaj_skarb()
+        dodaj_skarb(awatar=Obrazek.GWIAZDKA, pozycja=(2,2), punkty=10)
+        dodaj_skarb(pozycja=(4,5))
+        dodaj_skarb(punkty=-1)
+
+    **Opis**
+    Ustawia na mapie skarb, który może zostać zebrana przez bohatera.
+
+    Za zebranie skarbu bohater dostanie określoną liczbę punktów. Zebranie odpowiedniej ilości punktów jest niezbędne
+    do wygrania rozgrywki.
+
+    **Parametry**
+
+    - **awatar** _(opcjonalny)_ - obrazek, który będzie reprezentował skarb
+        - dopuszczalne wartości:
+            - Obrazek.GWIAZDKA
+        - wartość domyślna: **Obrazek.GWIAZDKA**
+    - **pozycja** _(opcjonalny)_ - numer pola w poziomie, na którym ustawiony zostanie skarb
+        - wartość minimalna: **(0, 0)**
+        - wartość maksymalna: zależy od wielkości mapy - np (4,4) dla mapy 4x4
+        - wartość domyślna: **()** (program wylosuje pole)
+    - **punkty** _(opcjonalny)_ - ilość punktów, które uzyska bohater za zebranie skarbu
+        - wartość minimalna: brak
+        - wartość maksymalna: brak
+        - wartość domyślna: **1**
+    """
+    if len(pozycja) == 0:
+        pozycja = MAP_POSITIONS.pop(0)
+    __create_collectible(awatar.value, pozycja[0], pozycja[1], punkty)
+
+
+def ustaw_wynik_docelowy(punkty):
+    """
+    **Przykłady użycia**
+
+        ustaw_wynik_docelowy(5)
+
+    **Opis**
+    Modyfikuje ilość punktów, które musi zebrać bohater by wygrać rozgrywkę.
+
+    Domyślna wartość punktów, które musi zebrać bohater by wygrać rozgrywkę to **1 punkt**.
+
+    **Parametry**
+
+    - **punkty** _(obowiązkowy)_ - ilość punktów
+        - wartość minimalna: **0**
+        - wartość maksymalna: brak
+        - wartość domyślna: brak
+
+    **Zwracane błędy**
+
+    - **RuntimeError**
+        - _"Target points value must be greater than 0"_ - Podano zbyt niską wartość
+    """
+    __set_target_points(punkty)
 
 
 def __create_map(width, height):
@@ -67,22 +301,10 @@ def __create_map(width, height):
     random.shuffle(MAP_POSITIONS)
 
 
-def dodaj_gracza(obrazek="player.png", x=-1, y=-1):
-    if x == -1 and y == -1:
-        x, y = MAP_POSITIONS.pop(0)
-    __create_player(obrazek, x, y)
-
-
 def __create_player(sprite, x, y):
     PLAYER_CONFIGS.append({"sprite": sprite, "x": x, "y": y})
     if (x, y) in MAP_POSITIONS:
         MAP_POSITIONS.remove((x, y))
-
-
-def dodaj_przeciwnika(obrazek="enemy.png", x=-1, y=-1, predkosc=1):
-    if x == -1 and y == -1:
-        x, y = MAP_POSITIONS.pop(0)
-    __create_enemy(obrazek, x, y, predkosc)
 
 
 def __create_enemy(sprite, x, y, speed):
@@ -91,22 +313,10 @@ def __create_enemy(sprite, x, y, speed):
         MAP_POSITIONS.remove((x, y))
 
 
-def dodaj_przeszkode(obrazek="crates.png", x=-1, y=-1):
-    if x == -1 and y == -1:
-        x, y = MAP_POSITIONS.pop(0)
-    __create_obstacle(obrazek, x, y)
-
-
 def __create_obstacle(sprite, x, y):
     OBSTACLE_CONFIGS.append({"sprite": sprite, "x": x, "y": y})
     if (x, y) in MAP_POSITIONS:
         MAP_POSITIONS.remove((x, y))
-
-
-def dodaj_znajdzke(obrazek="star.png", x=-1, y=-1, punkty=1):
-    if x == -1 and y == -1:
-        x, y = MAP_POSITIONS.pop(0)
-    __create_collectible(obrazek, x, y, punkty)
 
 
 def __create_collectible(sprite, x, y, score):
@@ -115,12 +325,10 @@ def __create_collectible(sprite, x, y, score):
         MAP_POSITIONS.remove((x, y))
 
 
-def ustaw_wynik_docelowy(punkty):
-    __set_target_points(punkty)
-
-
 def __set_target_points(score):
     global TARGET_SCORE
+    if score < 0:
+        raise RuntimeError("Target points value must be greater than 0")
     TARGET_SCORE = score
 
 
@@ -189,10 +397,6 @@ def __move_enemies(map_size, tilemap):
             enemy.moveTo(tilemap[possible_targets[0]])
 
 
-def uruchom_gre():
-    __run_game()
-
-
 def __run_game():
     global GAME_OVER
     global WIN
@@ -201,7 +405,7 @@ def __run_game():
     pygame.init()
     pygame.freetype.init()
 
-    game_font = pygame.freetype.Font("milkyboba.ttf", 48)
+    game_font = pygame.freetype.Font("resources/milkyboba.ttf", 48)
     screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 
     running = True
@@ -233,9 +437,9 @@ def __run_game():
     cover = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.SRCALPHA)
     pygame.draw.rect(cover, (0, 0, 0, 120), (0, 0, SCREEN_WIDTH, SCREEN_HEIGHT))
 
-    game_over_label = Image("game_over_label.png", SCREEN_CENTER[0], SCREEN_CENTER[1])
-    win_label = Image("win_label.png", SCREEN_CENTER[0], SCREEN_CENTER[1])
-    star_label = Image("star.png", 0, 0)
+    game_over_label = Image("resources/game_over_label.png", SCREEN_CENTER[0], SCREEN_CENTER[1])
+    win_label = Image("resources/win_label.png", SCREEN_CENTER[0], SCREEN_CENTER[1])
+    star_label = Image("resources/star.png", 0, 0)
 
     while running:
         for event in pygame.event.get():
